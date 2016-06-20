@@ -13,7 +13,16 @@ var config = {
                 pass 	: 'root'
             }
         },
-        production: {}
+        production: {
+            env: 'production',
+            db: {
+                host	: 'localhost',
+                port	: 3306,
+                name	: 'frendzi',
+                user 	: 'root',
+                pass 	: 'pwd@frendzi_db'
+            }
+        }
     };
 
 // set development as default environment
