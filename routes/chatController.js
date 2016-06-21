@@ -16,6 +16,7 @@ exports.connect = function (data){
     }else{
         connected[data.id] = [data.socketId];
     }
+    console.log('>> SOCKETS <<<');
     console.log(data);
     insertDeviceTag(data, function (err, result){
         if(err)return console.log(err);

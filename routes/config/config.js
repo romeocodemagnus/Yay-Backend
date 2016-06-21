@@ -15,6 +15,7 @@ var config = {
         },
         production: {
             env: 'production',
+            port		: 3000,
             db: {
                 host	: 'localhost',
                 port	: 3306,
