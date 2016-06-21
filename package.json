@@ -4,7 +4,7 @@
   "private": true,
   "author": "Bernard Glen (RubberDon't) Gumayao <bernard@codemagnus.com>",
   "scripts": {
-    "start": "nodemon ./bin/www",
+    "start": "forever -o out.log -e err.log start ./bin/www",
     "test": "mocha test -R spec -t 15000 -s 0 --watch"
   },
   "dependencies": {
