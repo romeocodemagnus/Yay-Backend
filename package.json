@@ -1,5 +1,5 @@
 {
-  "name": "frendzi",
+  "name": "friendzi",
   "version": "0.1.0",
   "private": true,
   "author": "Bernard Glen (RubberDon't) Gumayao <bernard@codemagnus.com>",
@@ -26,6 +26,6 @@
     "socket.io-client": "~1.4.6"
   },
   "apidoc": {
-    "title": "Frendzi"
+    "title": "Friendzi"
   }
 }
