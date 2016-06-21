@@ -3,15 +3,15 @@
  */
 var azure = require('azure-sb');
 
-//var notificationHubService = azure.createNotificationHubService(
-//    process.env.PUSH_HUBNAME,
-//    process.env.PUSH_CONNECTION_STRING
-//);
-
 var notificationHubService = azure.createNotificationHubService(
-    "frendzi_notification",
-    "Endpoint=sb://frendzi.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=ecuJyZTEE9aYi5tHp6enDcy3IDQr6ug7GmWVhxJuhpg="
+    process.env.PUSH_HUBNAME,
+    process.env.PUSH_CONNECTION_STRING
 );
+
+//var notificationHubService = azure.createNotificationHubService(
+//    "frendzi_notification",
+//    "Endpoint=sb://frendzi.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=ecuJyZTEE9aYi5tHp6enDcy3IDQr6ug7GmWVhxJuhpg="
+//);
 
 exports.sendPush = function (tag, data, cb){
     var payLoad = {
