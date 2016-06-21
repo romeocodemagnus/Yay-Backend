@@ -73,7 +73,7 @@ exports.deleteTag = function(data, cb){
             cb({error: true});
         }
     });
-}
+};
 exports.startChat = function (data, cb){
     console.log("START CHAT");
     console.log(data);
