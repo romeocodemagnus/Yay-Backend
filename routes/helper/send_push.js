@@ -1,13 +1,7 @@
 /**
  * Created by root on 6/20/16.
  */
-var azure = require('azure-sb');
-
-var notificationHubService = azure.createNotificationHubService(
-    process.env.PUSH_HUBNAME,
-    process.env.PUSH_CONNECTION_STRING
-);
-
+var azure = require('./azure');
 exports.sendPush = function (tag, data, cb){
     var payLoad = {
         aps: {
@@ -16,7 +10,7 @@ exports.sendPush = function (tag, data, cb){
         chatHead: data.chatHead,
         name: data.name
     };
-    notificationHubService.apns.send(tag, payLoad, function (err){
+    azure.apns.send(tag, payLoad, function (err){
         if(!err){
             cb({error: false});
         }else{
