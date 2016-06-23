@@ -29,6 +29,8 @@ var async = require('async');
  */
 
 router.post('/registerDeviceToken', function (req, res){
+    console.log('HUBNAME', process.env.PUSH_HUBNAME);
+    console.log('CONNECTION STRING', process.env.PUSH_CONNECTION_STRING);
     if(validator.isMissing(req.body.device_token)){
         return res.status(404).send({error: false, message: "Missing device_token"});
     }
