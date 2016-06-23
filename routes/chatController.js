@@ -213,7 +213,7 @@ exports.registerEventForChat = function (data, cb){
         if(err){
             if(err.code === "ER_DUP_ENTRY"){
                 exports.addUserToEvent({
-                    chatHead: result.insertId,
+                    eventChat: result.insertId,
                     user_id: user_id
                 }, function (err, result){
                     if(err) return cb({error: true, message: err});
@@ -226,22 +226,31 @@ exports.registerEventForChat = function (data, cb){
         }
         if(result.insertId > 0){
             exports.addUserToEvent({
-                chatHead: result.insertId,
+                eventChat: result.insertId,
                 user_id: user_id
             }, function (err, result){
                 if(err)return cb({error: true, message: err});
-                cb({error: true, chatHead: result.insertId});
+                cb({error: true, eventChat: result.insertId});
             });
         }else{
             cb({error: true, message: "failed"});
         }
-    })
+    });
+
+
+    function getEventChatIdByEventId(cb){
+        var query = "SELECT `id` FROM `eventChat`";
+        query += " " + "WHERE `event_id`=" + db.escape(eventId);
+        db.query(query, function(err, result){
+
+        });
+    }
 };
 
 exports.addUserToEvent = function (data, cb){
     var query = "INSERT INTO `chat_users` SET ?";
     db.query(query, {
-        chatHead_id: data.chatHead,
+        eventChat_id: data.eventChat,
         user_id: data.user_id
     }, function (err, result){
         if(err){
@@ -271,7 +280,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
         console.log(result);
         if(result.insertId > 0){
             socket.broadcast.to(data.chatHead).emit('newMessage', data);
-            getEventUsers(data.chatHead, function (err, users){
+            getEventUsers(data.eventChat, function (err, users){
                 async.map(users, sendPush);
             });
             cb({error: false, data: data});

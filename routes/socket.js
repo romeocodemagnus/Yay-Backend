@@ -316,7 +316,7 @@ module.exports = function (io){
        * @api {emit} registerEvent Register event to start chatting
        * @apiVersion 0.1.0
        * @apiName Socket register event
-       * @apiGroup Chat Event
+       * @apiGroup Event
        *
        * @apiParam {String} event_id Event id
        * @apiParam {String} user_id Id of user who owns the event
@@ -340,7 +340,7 @@ module.exports = function (io){
        * @api {emit} addUserToEvent Register user to event to enable chat with other users
        * @apiVersion 0.1.0
        * @apiName Socket add user
-       * @apiGroup Chat Event
+       * @apiGroup Event
        *
        * @apiParam {String} user_id Id of user that joined the event
        * @apiSuccess {Boolean} error=false Value will be true/false
@@ -364,7 +364,7 @@ module.exports = function (io){
        * @api {emit} getEventMessages Get messages on a specific event
        * @apiVersion 0.1.0
        * @apiName Socket get msg event
-       * @apiGroup Chat Event
+       * @apiGroup Event
        *
        * @apiDescription  This will return the messages for specific event
        *
@@ -420,6 +420,50 @@ module.exports = function (io){
           })
       });
 
+      /**
+       * @api {emit} sendMessageToEvent Send message to an event
+       * @apiVersion 0.1.0
+       * @apiName Socket send to event
+       * @apiGroup Event
+       *
+       * @apiDescription  This will send messages to user chatmate
+       *
+       * @apiParam {JSON} -JsonObject/NSDictionary- data type
+       * @apiParam {String} JsonObject.eventChat id(eventChat)
+       * @apiParam {String} JsonObject.name Sender name
+       * @apiParam {String} JsonObject.message Sender message
+       * @apiParam {String} JsonObject.image Sender image
+       * @apiParam {String} JsonObject.from Sender id
+       *
+       *
+       * @apiSuccess {JSON} -JsonObject/NSDictionary- data type
+       * @apiSuccess {String} JsonObject.chatHead id(chatHead) you got from EMIT 'startChat' or in INBOX
+       * @apiSuccess {String} JsonObject.name Sender name
+       * @apiSuccess {String} JsonObject.message Sender message
+       * @apiSuccess {String} JsonObject.to Receiver id
+       * @apiSuccess {String} JsonObject.from Sender id
+       *
+       * @apiSuccessExample Acknowledgement:
+       *    {
+       *        chatHead: 10,
+       *        name: 'sample name'
+       *        message: 'sample message'
+       *        to: 2
+       *        from: 1
+       *    }
+       *
+       *  @apiErrorExample Acknowledgement:
+       *    {
+       *        error: true,
+       *        message: 'Sending failed'
+       *    }
+       *
+       */
+      socket.on('sendMessageToEvent', function (data, ack){
+          chatController.sendMessageToEvent(socket, data, function (resp){
+              ack(resp);
+          })
+      });
       socket.on('disconnect', function (){
           console.log(socket.id + " disconnect");
           chatController.logout({

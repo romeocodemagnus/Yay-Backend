@@ -69,6 +69,7 @@ router.post('/registerDeviceToken', function (req, res){
 
                 db.query(query, function (err, result){
                     if (err) {
+                        console.log(err);
                         if (err.code === 'ER_DUP_ENTRY') {
                             return done(null, {error: false, message: "Success"});
                         }else {
