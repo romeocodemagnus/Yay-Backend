@@ -92,8 +92,7 @@ module.exports = function (io){
        */
       socket.on('sendMessage', function (data, ack){
           chatController.saveMessage(socket, data, function (resp){
-              console.log("SEND MESSAGE");
-              console.log(resp);
+              console.log("SEND MESSAGE", resp);
               ack(resp);
           })
       });
@@ -167,7 +166,7 @@ module.exports = function (io){
        *            to: 1,
        *            from: 2
        *        }
-       *    ]
+       *    ],
        *    hasNext: true/false
        *}
        *
@@ -311,6 +310,116 @@ module.exports = function (io){
               ack(resp);
           })
       });
+
+
+      /**
+       * @api {emit} registerEvent Register event to start chatting
+       * @apiVersion 0.1.0
+       * @apiName Socket register event
+       * @apiGroup Chat Event
+       *
+       * @apiParam {String} event_id Event id
+       * @apiParam {String} user_id Id of user who owns the event
+       * @apiSuccess {Boolean} error=false Value will be true/false
+       * @apiSuccess {String} chatHead Conversation Id
+       * @apiSuccessExample Acknowledgement:
+       *    {
+       *        error: false,
+       *        chatHead: 10
+       *    }
+       *
+       * @apiError error=true
+       */
+      socket.on('registerEvent', function (data, ack){
+          chatController.registerEventForChat(data, function (resp){
+              ack(resp);
+          })
+      });
+
+      /**
+       * @api {emit} addUserToEvent Register user to event to enable chat with other users
+       * @apiVersion 0.1.0
+       * @apiName Socket add user
+       * @apiGroup Chat Event
+       *
+       * @apiParam {String} user_id Id of user that joined the event
+       * @apiSuccess {Boolean} error=false Value will be true/false
+       * @apiSuccess {String} message Success response
+       * @apiSuccessExample Acknowledgement:
+       *    {
+       *        error: false,
+       *        message: "success"
+       *    }
+       *
+       * @apiError error=true
+       */
+      socket.on('addUserToEvent', function (data, ack){
+          chatController.addUserToEvent(data, function (resp){
+              ack(resp);
+          });
+      });
+
+
+      /**
+       * @api {emit} getEventMessages Get messages on a specific event
+       * @apiVersion 0.1.0
+       * @apiName Socket get msg event
+       * @apiGroup Chat Event
+       *
+       * @apiDescription  This will return the messages for specific event
+       *
+       * @apiParam {JSON} -JsonObject/NSDictionary- data type
+       * @apiParam {String} a.chatHead chatHead id
+       * @apiParam {String} [a.last_message_id] required if fetching another set of messages in a specific chatHead id
+       *
+       * @apiSuccess {JSON} messages Container of messages
+       * @apiSuccess {Array} messages.-JsonArray- data type -- array of messages
+       * @apiSuccess {JSON} messages.JsonArray.-JsonObject- data type per array
+       * @apiSuccess {String} messages.JsonArray.JsonObject.chatHead id(chatHead) you got from EMIT 'startChat' or in INBOX
+       * @apiSuccess {String} messages.JsonArray.JsonObject.name Sender name
+       * @apiSuccess {String} messages.JsonArray.JsonObject.message Sender message
+       * @apiSuccess {String} messages.JsonArray.JsonObject.image Sender image
+       * @apiSuccess {String} messages.JsonArray.JsonObject.from Sender id
+       * @apiSuccess {Date} messages.JsonArray.JsonObject.created date
+       *
+       * @apiSuccess {Boolean} hasNext indicator if there's more messages to fetch
+       *
+       * @apiSuccessExample Acknowledgement:
+       * {
+       *    messages: [
+       *        {
+       *            chatHead: 10,
+       *            name: 'sample name'
+       *            message: 'sample message'
+       *            image: 'sample image',
+       *            from: 2,
+       *            created: '2016-06-20T08:55:00.000Z',
+       *        },
+       *        {
+       *            chatHead: 10,
+       *            name: 'sample name'
+       *            message: 'sample message'
+       *            image: 'sample image'
+       *            from: 2,
+       *            created: '2016-06-20T08:55:00.000Z',
+       *        }
+       *    ],
+       *    hasNext: true/false
+       * }
+       *
+       *  @apiErrorExample Acknowledgement:
+       *    {
+       *        error: true,
+       *        message: 'Sending failed'
+       *    }
+       *
+       */
+      socket.on('getEventMessages', function (data, ack){
+          chatController.getEventMessages(data, function(resp){
+              ack(resp);
+          })
+      });
+
       socket.on('disconnect', function (){
           console.log(socket.id + " disconnect");
           chatController.logout({
