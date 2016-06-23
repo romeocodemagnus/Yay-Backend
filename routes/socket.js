@@ -370,7 +370,7 @@ module.exports = function (io){
        * @apiDescription  This will return the messages for specific event
        *
        * @apiParam {JSON} -JsonObject/NSDictionary- data type
-       * @apiParam {String} a.event eventChat_id id
+       * @apiParam {String} a.eventChat_id id from EMIT 'registerEvent
        * @apiParam {String} [a.last_message_id] required if fetching another set of messages in a specific event
        *
        * @apiSuccess {JSON} messages Container of messages
