@@ -41,7 +41,7 @@ router.post('/registerDeviceToken', function (req, res){
         if(err) return res.status(500).send({error : true, message: err});
         if(result.hasUserAndTag === false){
             insertDeviceTag(result.tag, function (err, resp){
-                if(err) return res.status(500).send({error : true, message: err});
+                if(err) return res.status(500).send(err);
                 res.status(200).send(resp);
             })
         }else{
