@@ -325,7 +325,7 @@ module.exports = function (io){
        * @apiSuccessExample Acknowledgement:
        *    {
        *        error: false,
-       *        chatHead: 10
+       *        eventChat: 10
        *    }
        *
        * @apiError error=true
@@ -343,6 +343,7 @@ module.exports = function (io){
        * @apiGroup Event
        *
        * @apiParam {String} user_id Id of user that joined the event
+       * @paiPara {String} evenChat Id of event user want to join
        * @apiSuccess {Boolean} error=false Value will be true/false
        * @apiSuccess {String} message Success response
        * @apiSuccessExample Acknowledgement:
@@ -426,7 +427,7 @@ module.exports = function (io){
        * @apiName Socket send to event
        * @apiGroup Event
        *
-       * @apiDescription  This will send messages to user chatmate
+       * @apiDescription  This will send messages to event chat room
        *
        * @apiParam {JSON} -JsonObject/NSDictionary- data type
        * @apiParam {String} JsonObject.eventChat id(eventChat)
@@ -437,18 +438,18 @@ module.exports = function (io){
        *
        *
        * @apiSuccess {JSON} -JsonObject/NSDictionary- data type
-       * @apiSuccess {String} JsonObject.chatHead id(chatHead) you got from EMIT 'startChat' or in INBOX
+       * @apiSuccess {String} JsonObject.eventChat_id id(eventChat_id) you got from EMIT 'registerEvent'
        * @apiSuccess {String} JsonObject.name Sender name
        * @apiSuccess {String} JsonObject.message Sender message
-       * @apiSuccess {String} JsonObject.to Receiver id
+       * @apiSuccess {String} JsonObject.image Sender image
        * @apiSuccess {String} JsonObject.from Sender id
        *
        * @apiSuccessExample Acknowledgement:
        *    {
-       *        chatHead: 10,
+       *        eventChat_id: 10,
        *        name: 'sample name'
        *        message: 'sample message'
-       *        to: 2
+       *        image: 'sample image'
        *        from: 1
        *    }
        *

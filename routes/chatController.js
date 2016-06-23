@@ -207,42 +207,42 @@ exports.getMessages = function (data, cb){
 exports.registerEventForChat = function (data, cb){
     var eventId = data.eventId;
     var user_id = data.user_id;
-
-    var query = "INSERT INTO `chatHead` SET ?";
-    db.query(query, {event_id: eventId}, function (err, result){
-        if(err){
-            if(err.code === "ER_DUP_ENTRY"){
-                exports.addUserToEvent({
-                    eventChat: result.insertId,
-                    user_id: user_id
-                }, function (err, result){
-                    if(err) return cb({error: true, message: err});
-                    cb({error: true, chatHead: result.insertId});
-                });
-            }else{
-                //TODO change message on production
-                cb({error: true, message: err});
-            }
-        }
-        if(result.insertId > 0){
-            exports.addUserToEvent({
-                eventChat: result.insertId,
-                user_id: user_id
-            }, function (err, result){
-                if(err)return cb({error: true, message: err});
-                cb({error: true, eventChat: result.insertId});
+    async.waterfall([
+        getEventChatIdByEventId,
+        function (doNext, done){
+            var query = "INSERT INTO `chatHead` SET ?";
+            db.query(query, {event_id: eventId}, function (err, result){
+                if(err){
+                    //TODO change message on production
+                    done({error: true, message: err});
+                }
+                if(result.insertId > 0){
+                    exports.addUserToEvent({
+                        eventChat: result.insertId,
+                        user_id: user_id
+                    }, function (err, result){
+                        if(err)return cb({error: true, message: err});
+                        done({error: false, eventChat: result.insertId});
+                    });
+                }else{
+                    done({error: true, message: "failed"});
+                }
             });
-        }else{
-            cb({error: true, message: "failed"});
         }
+    ], function (resp){
+        cb(resp);
     });
-
 
     function getEventChatIdByEventId(cb){
         var query = "SELECT `id` FROM `eventChat`";
         query += " " + "WHERE `event_id`=" + db.escape(eventId);
         db.query(query, function(err, result){
-
+            if(err)return cb({error: false, err: err});
+            if(result && result.length){
+                cb({error: false, eventChat: result[0].id});
+            }else{
+                cb(null, false);
+            }
         });
     }
 };
