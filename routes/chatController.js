@@ -314,7 +314,7 @@ function getEventUsers(chatHead, cb){
 
 exports.getEventMessages = function (data, cb){
     var query = "SELECT * FROM `eventMessages`";
-    query += " " + "WHERE `eventChat_id`=" + db.escape(data.chatHead);
+    query += " " + "WHERE `eventChat_id`=" + db.escape(data.eventChat_id);
 
     if(!validator.isMissing(data.last_message_id)){
         query += " " + "AND `id` <" + db.escape(data.last_message_id);

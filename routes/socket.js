@@ -370,13 +370,13 @@ module.exports = function (io){
        * @apiDescription  This will return the messages for specific event
        *
        * @apiParam {JSON} -JsonObject/NSDictionary- data type
-       * @apiParam {String} a.chatHead chatHead id
-       * @apiParam {String} [a.last_message_id] required if fetching another set of messages in a specific chatHead id
+       * @apiParam {String} a.event eventChat_id id
+       * @apiParam {String} [a.last_message_id] required if fetching another set of messages in a specific event
        *
        * @apiSuccess {JSON} messages Container of messages
        * @apiSuccess {Array} messages.-JsonArray- data type -- array of messages
        * @apiSuccess {JSON} messages.JsonArray.-JsonObject- data type per array
-       * @apiSuccess {String} messages.JsonArray.JsonObject.chatHead id(chatHead) you got from EMIT 'startChat' or in INBOX
+       * @apiSuccess {String} messages.JsonArray.JsonObject.eventChat_id id(eventChat_id) you got from EMIT 'registerEvent'
        * @apiSuccess {String} messages.JsonArray.JsonObject.name Sender name
        * @apiSuccess {String} messages.JsonArray.JsonObject.message Sender message
        * @apiSuccess {String} messages.JsonArray.JsonObject.image Sender image
@@ -389,7 +389,7 @@ module.exports = function (io){
        * {
        *    messages: [
        *        {
-       *            chatHead: 10,
+       *            eventChat_id: 10,
        *            name: 'sample name'
        *            message: 'sample message'
        *            image: 'sample image',
@@ -397,7 +397,7 @@ module.exports = function (io){
        *            created: '2016-06-20T08:55:00.000Z',
        *        },
        *        {
-       *            chatHead: 10,
+       *            eventChat_id: 10,
        *            name: 'sample name'
        *            message: 'sample message'
        *            image: 'sample image'
