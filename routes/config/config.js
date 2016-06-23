@@ -11,6 +11,10 @@ var config = {
                 name	: 'frendzi',
                 user 	: 'root',
                 pass 	: 'root'
+            },
+            azure: {
+                hubname : "friendzi_notification",
+                connection_string: "Endpoint=sb://friendzipush.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=BVNNYuxrlvIxEzjai0AtMPeuQeXJvXDrZlfTCxvz4Zk="
             }
         },
         production: {
@@ -22,6 +26,10 @@ var config = {
                 name	: 'frendzi',
                 user 	: 'root',
                 pass 	: 'pwd@frendzi_db'
+            },
+            azure: {
+                hubname : process.env.PUSH_HUBNAME,
+                connection_string: process.env.PUSH_CONNECTION_STRING
             }
         }
     };
