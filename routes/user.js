@@ -41,6 +41,7 @@ router.post('/registerDeviceToken', function (req, res){
 
     findDeviceTagWithUser(function (err, result){
         if(err) return res.status(500).send({error : true, message: err});
+        console.log(result);
         if(result.hasUserAndTag === false){
             insertDeviceTag(result.tag, function (err, resp){
                 if(err) return res.status(500).send(err);
@@ -70,7 +71,13 @@ router.post('/registerDeviceToken', function (req, res){
                 query += " " + ", `tag`=" + db.escape(tag);
 
                 db.query(query, function (err, result){
-                    if(err)return cb({error: true, err: err}, null);
+                    if (err) {
+                        if (err.code === 'ER_DUP_ENTRY') {
+                            return done(null, {error: false, message: "Success"});
+                        }else {
+                            return done({error: true, err: err}, null);
+                        }
+                    }
                     if(result.insertId > 0){
                         done(null, {error : false, message: "Success"});
                     }else{
