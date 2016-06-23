@@ -24,7 +24,7 @@ var options = {
     'force new connection': true
 };
 
-describe('Test Server', function (){
+describe('Test chat socket', function (){
     var client1Url1 = socketUrl + '?id=' + user_1.id + '&tag=' + user_1.tag;
     var client1Url2 = socketUrl + '?id=' + user_2.id + '&tag=' + user_2.tag;
     var client1 = io.connect(client1Url1, options);
@@ -41,7 +41,6 @@ describe('Test Server', function (){
             client2.emit('startChat', {
                 users:[user_2.id, user_1.id]
             }, function (resp){
-                console.log(resp);
                 should.exist(resp);
                 resp.should.have.property('chatHead');
                 chatHead_id = resp.chatHead;
@@ -89,7 +88,6 @@ describe('Test Server', function (){
 
     it('Retrieving inbox', function (done){
         client1.emit('getUserInbox', {id: user_1.id}, function (resp){
-            console.log(resp);
             done();
         });
     });

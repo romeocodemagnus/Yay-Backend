@@ -332,6 +332,8 @@ module.exports = function (io){
        */
       socket.on('registerEvent', function (data, ack){
           chatController.registerEventForChat(data, function (resp){
+              if(resp.eventChat)
+                socket.join(resp.eventChat);
               ack(resp);
           })
       });
@@ -465,6 +467,49 @@ module.exports = function (io){
               ack(resp);
           })
       });
+
+      /**
+       * @api {emit} joinEvent Join in event chatroom to receive messages
+       * @apiVersion 0.1.0
+       * @apiName Socket joinEvent
+       * @apiGroup Event
+       *
+       * @apiDescription This will join user in event chatroom
+       *
+       * @apiParam {JsonObject} -JsonObject- data type
+       * @apiParam {String} JsonObject.eventChat eventChat id
+       * @apiParam {String} [JsonObject.eventId] event id -- in case eventChat id is not obtained
+       */
+      socket.on('joinEvent', function(data, ack){
+          if(!data.evenChat){
+              chatController.getEventChatIdByEventId(data, function(resp){
+                  if(resp.eventChat){
+                      socket.join(resp.eventChat);
+                  }else {
+                      ack(resp);
+                  }
+              })
+          }else{
+              socket.join(data.eventChat);
+              ack({error: false, message: "success"});
+          }
+      });
+
+      /**
+       * @api {emit} leaveEvent Leave in event chatroom to stop receiving messages
+       * @apiVersion 0.1.0
+       * @apiName Socket leaveEvent
+       * @apiGroup Event
+       *
+       * @apiDescription This will leave user in event chatroom
+       *
+       * @apiParam {JsonObject} -JsonObject- data type
+       * @apiParam {String} JsonObject.eventChat eventChat id
+       */
+      socket.on('leaveEvent', function(data){
+          socket.leave(data.eventChat);
+      });
+
       socket.on('disconnect', function (){
           console.log(socket.id + " disconnect");
           chatController.logout({

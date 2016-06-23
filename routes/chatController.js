@@ -205,23 +205,24 @@ exports.getMessages = function (data, cb){
 //=================================================================================
 
 exports.registerEventForChat = function (data, cb){
-    var eventId = data.eventId;
+    var eventId = data.event_id;
     var user_id = data.user_id;
     async.waterfall([
         getEventChatIdByEventId,
         function (doNext, done){
-            var query = "INSERT INTO `chatHead` SET ?";
+            var query = "INSERT INTO `eventChat` SET ?";
             db.query(query, {event_id: eventId}, function (err, result){
                 if(err){
+                    console.log(err);
                     //TODO change message on production
-                    done({error: true, message: err});
+                    return done({error: true, message: err});
                 }
                 if(result.insertId > 0){
                     exports.addUserToEvent({
                         eventChat: result.insertId,
                         user_id: user_id
-                    }, function (err, result){
-                        if(err)return cb({error: true, message: err});
+                    }, function (err){
+                        if(err.error === true)return done(err);
                         done({error: false, eventChat: result.insertId});
                     });
                 }else{
@@ -248,17 +249,21 @@ exports.registerEventForChat = function (data, cb){
 };
 
 exports.addUserToEvent = function (data, cb){
+    if(!data.user_id){
+        return;
+    }
     var query = "INSERT INTO `chat_users` SET ?";
     db.query(query, {
         eventChat_id: data.eventChat,
         user_id: data.user_id
     }, function (err, result){
         if(err){
+            console.log(err);
             if(err.code === "ER_DUP_ENTRY"){
-                cb({error: false, message: "success"});
+                return cb({error: false, message: "success"});
             }else{
                 //TODO change message on production
-                cb({error: true, message: err});
+                return cb({error: true, message: err});
             }
         }
         if(result.insertId > 0){
@@ -271,7 +276,7 @@ exports.addUserToEvent = function (data, cb){
 
 exports.sendMessageToEvent = function (socket, data, cb){
     console.log(data);
-    if(validator.isMissing(data.chatHead)){
+    if(validator.isMissing(data.eventChat)){
         return cb({error: true, message: "Missing chatHead"});
     }
     var query = "INSERT INTO `eventMessages` SET ?";
@@ -279,7 +284,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
         if(err) return cb({error: true, message: err});
         console.log(result);
         if(result.insertId > 0){
-            socket.broadcast.to(data.chatHead).emit('newMessage', data);
+            socket.broadcast.to(data.eventChat).emit('newMessage', data);
             getEventUsers(data.eventChat, function (err, users){
                 async.map(users, sendPush);
             });
@@ -311,6 +316,23 @@ function getEventUsers(chatHead, cb){
     query += " " + "WHERE `chatHead_id`=" + db.escape(chatHead);
     db.query(query, cb);
 }
+
+exports.getEventChatIdByEventId = function (data, cb){
+    var query = "SELECT `id` FROM `eventChat`";
+    query += " " + "WHERE `event_id`=" + db.escape(data.eventId);
+    db.query(query, function(err, result){
+        if(err) return cb({error: true, message: err});
+        if(result && result.length){
+            cb({error: false, eventChat: result[0].id})
+        }else {
+            exports.registerEventForChat({
+                event_id: data.eventId
+            }, function(resp){
+                cb(resp);
+            });
+        }
+    });
+};
 
 exports.getEventMessages = function (data, cb){
     var query = "SELECT * FROM `eventMessages`";
