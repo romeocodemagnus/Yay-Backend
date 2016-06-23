@@ -6,7 +6,7 @@ var router = express.Router();
 var azure = require('./helper/azure');
 var validator = require('./helper/validator');
 var db = require('./helper/db');
-
+var async = require('async');
 
 /**
  * @api {POST} http://40.69.32.246:3000/users/registerDeviceToken Register user device token for push
@@ -37,52 +37,85 @@ router.post('/registerDeviceToken', function (req, res){
     }
     var token = req.body.device_token;
 
-    findDeviceTag(function (err, tags){
-        if(tags){
-            if(!tags.length){
-                insertDeviceTag(function (err, resp){
-                    if(err)return res.status(400).send(err);
-
-                    res.status(200).send(resp);
-                })
-            }else {
-                res.status(200).send({error: false, message: "Success"});
-            }
-        }else{
-            insertDeviceTag(function (err, resp){
-                if(err)return res.status(400).send(err);
-
+    findDeviceTagWithUser(function (err, result){
+        if(err) return res.status(500).send({error : true, message: err});
+        if(result.hasUserAndTag === false){
+            insertDeviceTag(result.tag, function (err, resp){
+                if(err) return res.status(500).send({error : true, message: err});
                 res.status(200).send(resp);
             })
+        }else{
+            res.status(200).send({error : false, message: "Success"});
         }
     });
 
-    function insertDeviceTag(cb){
-        azure.apns.createNativeRegistration(token, token, function (err, response){
-            if(err) return cb({error: true, err: err}, null);
-            if(response){
+    function insertDeviceTag(tag, cb){
+        async.waterfall([
+            function (done){
+                if(tag){
+                    done(null, tag);
+                }else {
+                    azure.apns.createNativeRegistration(token, token, function (err, response){
+                        if(err) return done({error: true, err: err});
+                        if(response){
+                            done(null, response.Tags);
+                        }
+                    });
+                }
+            }, function (tag, done){
                 var query = "INSERT INTO `push_tag` SET";
                 query += " " + "`user_id`=" + db.escape(req.body.user_id);
-                query += " " + ", `tag`=" + db.escape(response.Tags);
+                query += " " + ", `tag`=" + db.escape(tag);
+
                 db.query(query, function (err, result){
                     if(err)return cb({error: true, err: err}, null);
                     if(result.insertId > 0){
-                        cb(null, {error : false, message: "Success"});
+                        done(null, {error : false, message: "Success"});
                     }else{
-                        cb({error : true, message: "Failed"}, null);
+                        done({error : true, message: "Failed"});
                     }
                 });
             }
-        });
+        ], cb);
     }
-    function findDeviceTag(cb){
-        var query = "SELECT `tag` FROM `push_tag`";
-        query += " " + "WHERE `user_id`=" + db.escape(req.body.user_id);
-        query += " " + ", `tag`=" + db.escape(token);
-        db.query(query, function (err, tags){
-            if(err) return cb(err, null);
-            if(tags){
-                cb(null, tags);
+    function findDeviceTagWithUser(cb){
+        var result = {
+            hasUserAndTag : false
+        };
+        async.parallel([
+            function (done){
+                var query = "SELECT `tag` FROM `push_tag`";
+                query += " " + "WHERE `user_id`=" + db.escape(req.body.user_id);
+                query += " " + ", `tag`=" + db.escape(token);
+
+                db.query(query, function (err, tags){
+                    if(err) return done(err);
+                    if(tags){
+                        if(tags.length){
+                            result.hasUserAndTag = true;
+                        }
+                    }
+                    done();
+                });
+            }, function(done){
+                var query = "SELECT `tag` FROM `push_tag`";
+                query += " " + "WHERE `tag`=" + db.escape(token);
+
+                db.query(query, function (err, tags){
+                    if(err) return done(err);
+                    if(tags){
+                        if(tags.length){
+                            result.tag = tags[0];
+                        }
+                    }
+                    done();
+                });
+            }
+        ], function(ers){
+            if(ers && ers.length){
+                cb(err, null);
+            }else{
+                cb(null, result);
             }
         });
     }

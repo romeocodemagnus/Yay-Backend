@@ -18,10 +18,6 @@ exports.connect = function (data){
     }
     console.log('>> SOCKETS <<<');
     console.log(data);
-    insertDeviceTag(data, function (err, result){
-        if(err)return console.log(err);
-        console.log(result);
-    })
 };
 
 //User disconnecting to socket
@@ -45,20 +41,6 @@ function findDeviceTag(data, cb){
             cb(null, tags);
         }
     });
-}
-
-function insertDeviceTag(data, cb){
-    var query = "INSERT INTO `push_tag` SET";
-    query += " " + "`user_id`=" + db.escape(data.id);
-    query += " " + ", `tag`=" + db.escape(data.tag);
-
-    findDeviceTag(data, function (err, tags){
-        if(tags){
-            if(!tags.length){
-                db.query(query, cb);
-            }
-        }
-    })
 }
 
 exports.deleteTag = function(data, cb){
