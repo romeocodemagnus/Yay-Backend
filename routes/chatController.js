@@ -16,13 +16,12 @@ exports.connect = function (data){
     }else{
         connected[data.id] = [data.socketId];
     }
-    console.log('>> SOCKETS <<<');
-    console.log(data);
+    console.log('SOCKET >>', data);
 };
 
 //User disconnecting to socket
 exports.logout = function (data){
-    var connectedSocket = connected[data.id];
+    var connectedSocket = connected[data.user_id];
     if(connectedSocket){
         var indexOfSocketId = connectedSocket.indexOf(data.socketId);
         connectedSocket.splice(indexOfSocketId, 1);
@@ -31,7 +30,7 @@ exports.logout = function (data){
 
 function findDeviceTag(data, cb){
     var query = "SELECT `tag` FROM `push_tag`";
-    query += " " + "WHERE `user_id`=" + db.escape(data.id);
+    query += " " + "WHERE `user_id`=" + db.escape(data.user_id);
     if(data.tag){
         query += " " + "AND `tag`=" + db.escape(data.tag);
     }
@@ -57,8 +56,7 @@ exports.deleteTag = function(data, cb){
     });
 };
 exports.startChat = function (data, cb){
-    console.log("START CHAT");
-    console.log(data);
+    console.log("START CHAT >>", data);
     var users = data.users;
     if(!users.length){
         return cb({error: true, message: "users must be an array e.g [ user_1, user_2 ]"});
@@ -141,30 +139,16 @@ exports.saveMessage = function (socket, data, cb){
             console.log(data.chatHead);
             socket.broadcast.to(data.chatHead).emit('newMessage', data);
             var connectedSockets = connected[data.to];
-            if(!connectedSockets){
-                findDeviceTag({id: data.to}, function (err, tags){
+            if(!connectedSockets || !connectedSockets.length){
+                findDeviceTag({user_id: data.to}, function (err, tags){
                     if(tags && tags.length){
                         tags.forEach(function (tag){
                             pushController.sendPush(tag, data, function (resp){
-                                console.log("PUSH");
-                                console.log(resp);
+                                console.log("PUSH", resp);
                             })
                         });
                     }
                 })
-            }else{
-                if(!connectedSockets.length){
-                    findDeviceTag({id: data.to}, function (err, tags){
-                        if(tags && tags.length){
-                            tags.forEach(function (tag){
-                                pushController.sendPush(tag, data, function (resp){
-                                    console.log("PUSH");
-                                    console.log(resp);
-                                })
-                            });
-                        }
-                    })
-                }
             }
             exports.markAsRead({
                 id: result.insertId,
@@ -197,6 +181,131 @@ exports.markAsRead = function (data, cb){
 exports.getMessages = function (data, cb){
     var query = "SELECT * FROM `chatMessages`";
     query += " " + "WHERE `chatHead`=" + db.escape(data.chatHead);
+
+    if(!validator.isMissing(data.last_message_id)){
+        query += " " + "AND `id` <" + db.escape(data.last_message_id);
+    }
+    query += " " + "ORDER BY `id` DESC";
+    query += " " + "LIMIT 10";
+
+    db.query(query, function (err, results){
+        if(err) return cb({error: true, message: err});
+        var data = {
+            messages: results,
+            hasNext : results.length == 10
+        };
+        cb(data);
+    })
+};
+
+//=================================================================================
+//*                                                                               *
+//*                                 GROUP CHAT                                    *
+//*                                                                               *
+//=================================================================================
+
+exports.registerEventForChat = function (data, cb){
+    var eventId = data.eventId;
+    var user_id = data.user_id;
+
+    var query = "INSERT INTO `chatHead` SET ?";
+    db.query(query, {event_id: eventId}, function (err, result){
+        if(err){
+            if(err.code === "ER_DUP_ENTRY"){
+                exports.addUserToEvent({
+                    chatHead: result.insertId,
+                    user_id: user_id
+                }, function (err, result){
+                    if(err) return cb({error: true, message: err});
+                    cb({error: true, chatHead: result.insertId});
+                });
+            }else{
+                //TODO change message on production
+                cb({error: true, message: err});
+            }
+        }
+        if(result.insertId > 0){
+            exports.addUserToEvent({
+                chatHead: result.insertId,
+                user_id: user_id
+            }, function (err, result){
+                if(err)return cb({error: true, message: err});
+                cb({error: true, chatHead: result.insertId});
+            });
+        }else{
+            cb({error: true, message: "failed"});
+        }
+    })
+};
+
+exports.addUserToEvent = function (data, cb){
+    var query = "INSERT INTO `chat_users` SET ?";
+    db.query(query, {
+        chatHead_id: data.chatHead,
+        user_id: data.user_id
+    }, function (err, result){
+        if(err){
+            if(err.code === "ER_DUP_ENTRY"){
+                cb({error: false, message: "success"});
+            }else{
+                //TODO change message on production
+                cb({error: true, message: err});
+            }
+        }
+        if(result.insertId > 0){
+            cb({error: false, message: "success"});
+        }else{
+            cb({error: true, message: "failed"});
+        }
+    });
+};
+
+exports.sendMessageToEvent = function (socket, data, cb){
+    console.log(data);
+    if(validator.isMissing(data.chatHead)){
+        return cb({error: true, message: "Missing chatHead"});
+    }
+    var query = "INSERT INTO `eventMessages` SET ?";
+    db.query(query, data, function (err, result){
+        if(err) return cb({error: true, message: err});
+        console.log(result);
+        if(result.insertId > 0){
+            socket.broadcast.to(data.chatHead).emit('newMessage', data);
+            getEventUsers(data.chatHead, function (err, users){
+                async.map(users, sendPush);
+            });
+            cb({error: false, data: data});
+        }else{
+            cb({error: true, message: "Sending failed."});
+        }
+    });
+
+    function sendPush(data, cb){
+        var connectedSockets = connected[data.user_id];
+        if(!connectedSockets || !connectedSockets.length){
+            findDeviceTag({user_id: data.user_id}, function (err, tags){
+                if(tags && tags.length){
+                    tags.forEach(function (tag){
+                        pushController.sendPush(tag, data, function (resp){
+                            console.log("PUSH", resp);
+                        })
+                    });
+                }
+                cb(null, null);
+            })
+        }
+    }
+};
+
+function getEventUsers(chatHead, cb){
+    var query = "SELECT * FROM `chat_users`";
+    query += " " + "WHERE `chatHead_id`=" + db.escape(chatHead);
+    db.query(query, cb);
+}
+
+exports.getEventMessages = function (data, cb){
+    var query = "SELECT * FROM `eventMessages`";
+    query += " " + "WHERE `eventChat_id`=" + db.escape(data.chatHead);
 
     if(!validator.isMissing(data.last_message_id)){
         query += " " + "AND `id` <" + db.escape(data.last_message_id);

@@ -29,8 +29,6 @@ var async = require('async');
  */
 
 router.post('/registerDeviceToken', function (req, res){
-    console.log('HUBNAME', process.env.PUSH_HUBNAME);
-    console.log('CONNECTION STRING', process.env.PUSH_CONNECTION_STRING);
     if(validator.isMissing(req.body.device_token)){
         return res.status(404).send({error: false, message: "Missing device_token"});
     }
@@ -41,7 +39,6 @@ router.post('/registerDeviceToken', function (req, res){
 
     findDeviceTagWithUser(function (err, result){
         if(err) return res.status(500).send({error : true, message: err});
-        console.log(result);
         if(result.hasUserAndTag === false){
             insertDeviceTag(result.tag, function (err, resp){
                 if(err) return res.status(500).send(err);
