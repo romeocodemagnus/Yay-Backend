@@ -429,7 +429,7 @@ module.exports = function (io){
        * @apiDescription  This will send messages to event chat room
        *
        * @apiParam {JSON} -JsonObject/NSDictionary- data type
-       * @apiParam {String} JsonObject.eventChat id(eventChat)
+       * @apiParam {String} JsonObject.eventChat_id id(eventChat)
        * @apiParam {String} JsonObject.name Sender name
        * @apiParam {String} JsonObject.message Sender message
        * @apiParam {String} JsonObject.image Sender image
