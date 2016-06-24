@@ -64,10 +64,10 @@ describe('Test event chat', function (){
         };
         client2.on('newMessage', function (resp){
             resp.should.have.property('eventChat_id');
+            setTimeout(finishTest, 5000);
         });
         client1.emit('sendMessageToEvent', eventMsg, function (resp){
             resp.should.have.property('eventChat_id');
-            setTimeout(finishTest, 5000);
         });
 
         var finishTest = function (){

@@ -134,6 +134,7 @@ exports.saveMessage = function (socket, data, cb){
         if(result.insertId > 0){
             socket.broadcast.to(data.chatHead).emit('newMessage', data);
             var connectedSockets = connected[data.to];
+            console.log("CONNECTED SOCKET", connectedSockets);
             if(!connectedSockets || !connectedSockets.length){
                 findDeviceTag({user_id: data.to}, function (err, tags){
                     if(tags && tags.length){
@@ -268,6 +269,7 @@ exports.addUserToEvent = function (data, cb){
 };
 
 exports.sendMessageToEvent = function (socket, data, cb){
+    console.log('event message', data);
     if(validator.isMissing(data.eventChat_id)){
         return cb({error: true, message: "Missing chatHead"});
     }
@@ -275,6 +277,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
     db.query(query, data, function (err, result){
         if(err) return cb({error: true, message: err});
         if(result.insertId > 0){
+            console.log(result);
             socket.broadcast.to(data.eventChat_id).emit('newMessage', data);
             getEventUsers(data.eventChat_id, function (err, users){
                 async.map(users, sendPush);

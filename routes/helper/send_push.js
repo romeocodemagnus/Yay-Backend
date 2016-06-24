@@ -7,7 +7,7 @@ exports.sendPush = function (tag, data, cb){
         aps: {
             alert: data.message
         },
-        chatHead: data.chatHead,
+        chatHead: data.chatHead || data.eventChat_id,
         name: data.name
     };
     azure.apns.send(tag, payLoad, function (err){
