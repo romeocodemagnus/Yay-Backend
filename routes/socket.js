@@ -434,7 +434,7 @@ module.exports = function (io){
        * @apiParam {String} JsonObject.message Sender message
        * @apiParam {String} JsonObject.image Sender image
        * @apiParam {String} JsonObject.from Sender id
-       * {String} [JsonObjecy.file] file URL
+       * @apiParam {String} [JsonObjecy.file] file URL
        *
        *
        * @apiSuccess {JSON} -JsonObject/NSDictionary- data type
