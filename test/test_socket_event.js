@@ -16,6 +16,7 @@ var user_2 = {
     tag: 'sample_tag_89fmng0Tyx-hj45x'
 };
 
+//var socketUrl = 'http://40.69.32.246:3000';
 var socketUrl = 'http://localhost:3000';
 
 var options = {
@@ -48,7 +49,6 @@ describe('Test event chat', function (){
             resp.should.have.property('error').eql(false);
             resp.should.have.property('message').eql("success");
             client2.emit('joinEvent', {eventChat: eventChat_id, user_id: user_2.id}, function (resp){
-                console.log('joinEvent', resp);
                 done();
             });
         });
@@ -63,11 +63,9 @@ describe('Test event chat', function (){
             from: user_1.id
         };
         client2.on('newMessage', function (resp){
-            console.log('newMessage', resp);
             resp.should.have.property('eventChat_id');
         });
         client1.emit('sendMessageToEvent', eventMsg, function (resp){
-            console.log('sendMessageToEvent', resp);
             resp.should.have.property('eventChat_id');
             setTimeout(finishTest, 5000);
         });
