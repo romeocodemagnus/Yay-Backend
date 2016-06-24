@@ -6,7 +6,10 @@ var async = require('async');
 var validator = require('../routes/helper/validator');
 var pushController = require('../routes/helper/send_push');
 
+//We'll store the socket ids
+//to check if user is connected or not
 var connected = {};
+
 
 //User connecting to socket
 exports.connect = function (data){
@@ -28,6 +31,8 @@ exports.logout = function (data){
     }
 };
 
+//will find device token (tag) via user_id
+//for push notification
 function findDeviceTag(data, cb){
     var query = "SELECT `tag` FROM `push_tag`";
     query += " " + "WHERE `user_id`=" + db.escape(data.user_id);
@@ -42,6 +47,8 @@ function findDeviceTag(data, cb){
     });
 }
 
+//will delete tag if user emit in logout
+//to disable push notification
 exports.deleteTag = function(data, cb){
     var query = "DELETE FROM `push_tag`";
     query += " " + "WHERE `user_id`=" + db.escape(data.id);
@@ -55,6 +62,185 @@ exports.deleteTag = function(data, cb){
         }
     });
 };
+
+//=================================================================================
+//*                                 GROUP CHAT                                    *
+//=================================================================================
+
+//Register event to generate event chat id
+exports.registerEventForChat = function (data, cb){
+    var eventId = data.event_id;
+    var user_id = data.user_id;
+    async.waterfall([
+        getEventChatIdByEventId,
+        function (doNext, done){
+            var query = "INSERT INTO `eventChat` SET ?";
+            db.query(query, {event_id: eventId}, function (err, result){
+                if(err){
+                    //TODO: change message on production
+                    return done({error: true, message: err});
+                }
+                if(result.insertId > 0){
+                    exports.addUserToEvent({
+                        eventChat: result.insertId,
+                        user_id: user_id
+                    }, function (err){
+                        if(err.error === true)return done(err);
+                        done({error: false, eventChat: result.insertId});
+                    });
+                }else{
+                    done({error: true, message: "failed"});
+                }
+            });
+        }
+    ], function (resp){
+        cb(resp);
+    });
+    //search for existing record of event chat
+    //this will return the eventChat_id to the client
+    //to be use for getting messages
+    function getEventChatIdByEventId(cb){
+        var query = "SELECT `id` FROM `eventChat`";
+        query += " " + "WHERE `event_id`=" + db.escape(eventId);
+        db.query(query, function(err, result){
+            if(err)return cb({error: false, err: err});
+            if(result && result.length){
+                cb({error: false, eventChat: result[0].id});
+            }else{
+                cb(null, false);
+            }
+        });
+    }
+};
+
+//will be called if event owner/creator  accepts a request
+//from other user to join the event
+exports.addUserToEvent = function (data, cb){
+    if(!data.user_id){
+        return;
+    }
+    var query = "INSERT INTO `chat_users` SET ?";
+    db.query(query, {
+        eventChat_id: data.eventChat,
+        user_id: data.user_id
+    }, function (err, result){
+        if(err){
+            if(err.code === "ER_DUP_ENTRY"){
+                return cb({error: false, message: "success"});
+            }else{
+                //TODO change message on production
+                return cb({error: true, message: err});
+            }
+        }
+        if(result.insertId > 0){
+            cb({error: false, message: "success"});
+        }else{
+            cb({error: true, message: "failed"});
+        }
+    });
+};
+
+//Send message to an event
+//this will broadcast the message to a specific event chat
+//except the sender
+exports.sendMessageToEvent = function (socket, data, cb){
+    console.log('event message', data);
+    if(validator.isMissing(data.eventChat_id)){
+        return cb({error: true, message: "Missing chatHead"});
+    }
+    var query = "INSERT INTO `eventMessages` SET ?";
+    db.query(query, data, function (err, result){
+        if(err) return cb({error: true, message: err});
+        if(result.insertId > 0){
+            //Send message to event chat
+            socket.broadcast.to(data.eventChat_id).emit('newMessage', data);
+
+            //will get the users in an event via eventChat_id
+            //then check if they have an active socket
+            //if not connected, we will send a push notification
+            getEventUsers(data.eventChat_id, function (err, users){
+                async.map(users, sendPush);
+            });
+            cb(data);
+        }else{
+            cb({error: true, message: "Sending failed."});
+        }
+    });
+
+    function sendPush(data){
+        var connectedSockets = connected[data.user_id];
+        if(!connectedSockets || !connectedSockets.length){
+            findDeviceTag({user_id: data.user_id}, function (err, tags){
+                console.log("DEVICE TOKEN", err);
+                if(tags && tags.length){
+                    tags.forEach(function (tag){
+                        pushController.sendPush(tag, data, function (resp){
+                            console.log("PUSH", resp);
+                        })
+                    });
+                }
+            })
+        }
+    }
+};
+
+function getEventUsers(chatHead, cb){
+    var query = "SELECT * FROM `chat_users`";
+    query += " " + "WHERE `eventChat_id`=" + db.escape(chatHead);
+    db.query(query, cb);
+}
+
+//If eventChat_id is unobtainable
+//client side will use the event id
+//to get the eventChat_id
+exports.getEventChatIdByEventId = function (data, cb){
+    var query = "SELECT `id` FROM `eventChat`";
+    query += " " + "WHERE `event_id`=" + db.escape(data.eventId);
+    db.query(query, function(err, result){
+        if(err) return cb({error: true, message: err});
+        if(result && result.length){
+            cb({error: false, eventChat: result[0].id})
+        }else {
+            //in case event is not yet registered for chatting
+            exports.registerEventForChat({
+                event_id: data.eventId
+            }, function(resp){
+                cb(resp);
+            });
+        }
+    });
+};
+
+//will return 10 latest messages by eventChat_id
+//providing last_message_id will return 10 messages
+//prior to the last_message_id
+exports.getEventMessages = function (data, cb){
+    var query = "SELECT * FROM `eventMessages`";
+    query += " " + "WHERE `eventChat_id`=" + db.escape(data.eventChat_id);
+
+    if(!validator.isMissing(data.last_message_id)){
+        query += " " + "AND `id` <" + db.escape(data.last_message_id);
+    }
+    query += " " + "ORDER BY `id` DESC";
+    query += " " + "LIMIT 10";
+
+    db.query(query, function (err, results){
+        if(err) return cb({error: true, message: err});
+        var data = {
+            messages: results,
+            hasNext : results.length == 10
+        };
+        cb(data);
+    })
+};
+
+
+//Ignore this section .. this will be use later if personal messaging is available
+//=================================================================================
+//*                            ONE ON ONE CHAT                                    *
+//=================================================================================
+
+
 exports.startChat = function (data, cb){
     var users = data.users;
     if(!users.length){
@@ -177,160 +363,6 @@ exports.markAsRead = function (data, cb){
 exports.getMessages = function (data, cb){
     var query = "SELECT * FROM `chatMessages`";
     query += " " + "WHERE `chatHead`=" + db.escape(data.chatHead);
-
-    if(!validator.isMissing(data.last_message_id)){
-        query += " " + "AND `id` <" + db.escape(data.last_message_id);
-    }
-    query += " " + "ORDER BY `id` DESC";
-    query += " " + "LIMIT 10";
-
-    db.query(query, function (err, results){
-        if(err) return cb({error: true, message: err});
-        var data = {
-            messages: results,
-            hasNext : results.length == 10
-        };
-        cb(data);
-    })
-};
-
-//=================================================================================
-//*                                                                               *
-//*                                 GROUP CHAT                                    *
-//*                                                                               *
-//=================================================================================
-
-exports.registerEventForChat = function (data, cb){
-    var eventId = data.event_id;
-    var user_id = data.user_id;
-    async.waterfall([
-        getEventChatIdByEventId,
-        function (doNext, done){
-            var query = "INSERT INTO `eventChat` SET ?";
-            db.query(query, {event_id: eventId}, function (err, result){
-                if(err){
-                    //TODO change message on production
-                    return done({error: true, message: err});
-                }
-                if(result.insertId > 0){
-                    exports.addUserToEvent({
-                        eventChat: result.insertId,
-                        user_id: user_id
-                    }, function (err){
-                        if(err.error === true)return done(err);
-                        done({error: false, eventChat: result.insertId});
-                    });
-                }else{
-                    done({error: true, message: "failed"});
-                }
-            });
-        }
-    ], function (resp){
-        cb(resp);
-    });
-
-    function getEventChatIdByEventId(cb){
-        var query = "SELECT `id` FROM `eventChat`";
-        query += " " + "WHERE `event_id`=" + db.escape(eventId);
-        db.query(query, function(err, result){
-            if(err)return cb({error: false, err: err});
-            if(result && result.length){
-                cb({error: false, eventChat: result[0].id});
-            }else{
-                cb(null, false);
-            }
-        });
-    }
-};
-
-exports.addUserToEvent = function (data, cb){
-    if(!data.user_id){
-        return;
-    }
-    var query = "INSERT INTO `chat_users` SET ?";
-    db.query(query, {
-        eventChat_id: data.eventChat,
-        user_id: data.user_id
-    }, function (err, result){
-        if(err){
-            if(err.code === "ER_DUP_ENTRY"){
-                return cb({error: false, message: "success"});
-            }else{
-                //TODO change message on production
-                return cb({error: true, message: err});
-            }
-        }
-        if(result.insertId > 0){
-            cb({error: false, message: "success"});
-        }else{
-            cb({error: true, message: "failed"});
-        }
-    });
-};
-
-exports.sendMessageToEvent = function (socket, data, cb){
-    console.log('event message', data);
-    if(validator.isMissing(data.eventChat_id)){
-        return cb({error: true, message: "Missing chatHead"});
-    }
-    var query = "INSERT INTO `eventMessages` SET ?";
-    db.query(query, data, function (err, result){
-        if(err) return cb({error: true, message: err});
-        if(result.insertId > 0){
-            console.log(result);
-            socket.broadcast.to(data.eventChat_id).emit('newMessage', data);
-            getEventUsers(data.eventChat_id, function (err, users){
-                async.map(users, sendPush);
-            });
-            cb(data);
-        }else{
-            cb({error: true, message: "Sending failed."});
-        }
-    });
-
-    function sendPush(data){
-        var connectedSockets = connected[data.user_id];
-        if(!connectedSockets || !connectedSockets.length){
-            findDeviceTag({user_id: data.user_id}, function (err, tags){
-                console.log("DEVICE TOKEN", err);
-                if(tags && tags.length){
-                    tags.forEach(function (tag){
-                        pushController.sendPush(tag, data, function (resp){
-                            console.log("PUSH", resp);
-                        })
-                    });
-                }
-            })
-        }
-    }
-};
-
-function getEventUsers(chatHead, cb){
-    var query = "SELECT * FROM `chat_users`";
-    query += " " + "WHERE `eventChat_id`=" + db.escape(chatHead);
-    db.query(query, cb);
-}
-
-exports.getEventChatIdByEventId = function (data, cb){
-    var query = "SELECT `id` FROM `eventChat`";
-    query += " " + "WHERE `event_id`=" + db.escape(data.eventId);
-    db.query(query, function(err, result){
-        if(err) return cb({error: true, message: err});
-        if(result && result.length){
-            cb({error: false, eventChat: result[0].id})
-        }else {
-            exports.registerEventForChat({
-                event_id: data.eventId
-            }, function(resp){
-                cb(resp);
-            });
-        }
-    });
-};
-
-exports.getEventMessages = function (data, cb){
-    var query = "SELECT * FROM `eventMessages`";
-    query += " " + "WHERE `eventChat_id`=" + db.escape(data.eventChat_id);
 
     if(!validator.isMissing(data.last_message_id)){
         query += " " + "AND `id` <" + db.escape(data.last_message_id);
