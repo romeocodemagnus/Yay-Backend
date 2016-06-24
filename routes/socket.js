@@ -1,7 +1,7 @@
 var chatController = require("./chatController");
 module.exports = function (io){
     /**
-     * @api {ON} connect Connecting to socket
+     * @api {ON} connect A. Connecting to socket
      * @apiVersion 0.1.0
      * @apiName Socket connect
      * @apiGroup Chat
@@ -25,7 +25,7 @@ module.exports = function (io){
           return;
       }
       /**
-       * @api {emit} startChat Starting chat with another user
+       * @api {emit} startChat B. Starting chat with another user
        * @apiVersion 0.1.0
        * @apiName Socket start
        * @apiGroup Chat
@@ -52,7 +52,7 @@ module.exports = function (io){
       });
 
       /**
-       * @api {emit} sendMessage Send message to chatmate
+       * @api {emit} sendMessage C. Send message to chatmate
        * @apiVersion 0.1.0
        * @apiName Socket send
        * @apiGroup Chat
@@ -99,7 +99,7 @@ module.exports = function (io){
 
 
       /**
-       * @api {on} newMessage Receive message
+       * @api {on} newMessage D. Receive message
        * @apiVersion 0.1.0
        * @apiName Socket receive
        * @apiGroup Chat
@@ -126,7 +126,7 @@ module.exports = function (io){
 
 
       /**
-       * @api {emit} getMessages Get messages
+       * @api {emit} getMessages E. Get messages
        * @apiVersion 0.1.0
        * @apiName Socket get
        * @apiGroup Chat
@@ -184,7 +184,7 @@ module.exports = function (io){
       });
 
       /**
-       * @api {emit} markAsRead Mark as read
+       * @api {emit} markAsRead F. Mark as read
        * @apiVersion 0.1.0
        * @apiName Socket mark
        * @apiGroup Chat
@@ -208,7 +208,7 @@ module.exports = function (io){
 
 
       /**
-       * @api {emit} getUserInbox Get user inbox
+       * @api {emit} getUserInbox G. Get user inbox
        * @apiVersion 0.1.0
        * @apiName Socket get inbox
        * @apiGroup Chat
@@ -261,7 +261,7 @@ module.exports = function (io){
       });
 
       /**
-       * @api {emit} leave_chat Leaving chat page
+       * @api {emit} leave_chat H. Leaving chat page
        * @apiVersion 0.1.0
        * @apiName Socket leave
        * @apiGroup Chat
@@ -277,7 +277,7 @@ module.exports = function (io){
       });
 
       /**
-       * @api {emit} Typing Typing status
+       * @api {emit} Typing I. Typing status
        * @apiVersion 0.1.0
        * @apiName Socket typing
        * @apiGroup Chat
@@ -293,7 +293,7 @@ module.exports = function (io){
       });
 
       /**
-       * @api {emit} Logout Logout user
+       * @api {emit} Logout J. Logout user
        * @apiVersion 0.1.0
        * @apiName Socket logout
        * @apiGroup Chat
@@ -313,7 +313,7 @@ module.exports = function (io){
 
 
       /**
-       * @api {emit} registerEvent Register event to start chatting
+       * @api {emit} registerEvent A. Register event to start chatting
        * @apiVersion 0.1.0
        * @apiName Socket register event
        * @apiGroup Event
@@ -339,7 +339,7 @@ module.exports = function (io){
       });
 
       /**
-       * @api {emit} addUserToEvent Register user to event to enable chat with other users
+       * @api {emit} addUserToEvent B. Register user to event to enable chat with other users
        * @apiVersion 0.1.0
        * @apiName Socket add user
        * @apiGroup Event
@@ -364,7 +364,7 @@ module.exports = function (io){
 
 
       /**
-       * @api {emit} getEventMessages Get messages on a specific event
+       * @api {emit} getEventMessages C. Get messages on a specific event
        * @apiVersion 0.1.0
        * @apiName Socket get msg event
        * @apiGroup Event
@@ -424,7 +424,7 @@ module.exports = function (io){
       });
 
       /**
-       * @api {emit} sendMessageToEvent Send message to an event
+       * @api {emit} sendMessageToEvent D. Send message to an event
        * @apiVersion 0.1.0
        * @apiName Socket send to event
        * @apiGroup Event
@@ -469,7 +469,7 @@ module.exports = function (io){
       });
 
       /**
-       * @api {emit} joinEvent Join in event chatroom to receive messages
+       * @api {emit} joinEvent E. Join in event chatroom to receive messages
        * @apiVersion 0.1.0
        * @apiName Socket joinEvent
        * @apiGroup Event
@@ -496,7 +496,7 @@ module.exports = function (io){
       });
 
       /**
-       * @api {emit} leaveEvent Leave in event chatroom to stop receiving messages
+       * @api {emit} leaveEvent F. Leave in event chatroom to stop receiving messages
        * @apiVersion 0.1.0
        * @apiName Socket leaveEvent
        * @apiGroup Event
