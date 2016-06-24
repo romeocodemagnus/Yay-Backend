@@ -41,16 +41,43 @@ describe('Test event chat', function (){
     });
 
     it('Adding user to event chat', function (done){
-        client2.emit('addUserToEvent', {
+        client1.emit('addUserToEvent', {
             user_id: user_2.id,
             eventChat: eventChat_id
         }, function (resp){
             resp.should.have.property('error').eql(false);
             resp.should.have.property('message').eql("success");
-            done();
+            client2.emit('joinEvent', {eventChat: eventChat_id, user_id: user_2.id}, function (resp){
+                console.log('joinEvent', resp);
+                done();
+            });
         });
     });
+
     it('Sending message to an event', function (done){
-        done();
+        var eventMsg = {
+            eventChat_id: eventChat_id,
+            name : user_1.name,
+            message: 'sample message 84',
+            image: 'sample image 69',
+            from: user_1.id
+        };
+        client2.on('newMessage', function (resp){
+            console.log('newMessage', resp);
+            resp.should.have.property('eventChat_id');
+        });
+        client1.emit('sendMessageToEvent', eventMsg, function (resp){
+            console.log('sendMessageToEvent', resp);
+            resp.should.have.property('eventChat_id');
+            setTimeout(finishTest, 5000);
+        });
+
+        var finishTest = function (){
+            client1.emit('leaveEvent', {eventChat: eventChat_id});
+            client2.emit('leaveEvent', {eventChat: eventChat_id});
+            client1.disconnect();
+            client2.disconnect();
+            done();
+        };
     })
 });

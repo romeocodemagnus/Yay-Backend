@@ -46,7 +46,6 @@ module.exports = function (io){
               if(resp.chatHead)
                   socket.join(resp.chatHead);
 
-              console.log(resp);
               ack(resp);
           })
       });
@@ -92,7 +91,6 @@ module.exports = function (io){
        */
       socket.on('sendMessage', function (data, ack){
           chatController.saveMessage(socket, data, function (resp){
-              console.log("SEND MESSAGE", resp);
               ack(resp);
           })
       });
@@ -255,7 +253,6 @@ module.exports = function (io){
        */
       socket.on('getUserInbox', function (data, ack){
           chatController.getUserInbox(data, function(resp){
-              console.log(resp);
               ack(resp);
           })
       });
@@ -481,7 +478,7 @@ module.exports = function (io){
        * @apiParam {String} [JsonObject.eventId] event id -- in case eventChat id is not obtained
        */
       socket.on('joinEvent', function(data, ack){
-          if(!data.evenChat){
+          if(!data.eventChat){
               chatController.getEventChatIdByEventId(data, function(resp){
                   if(resp.eventChat){
                       socket.join(resp.eventChat);
@@ -508,6 +505,7 @@ module.exports = function (io){
        */
       socket.on('leaveEvent', function(data){
           socket.leave(data.eventChat);
+          console.log(socket.id + " leaving event " + data.eventChat);
       });
 
       socket.on('disconnect', function (){

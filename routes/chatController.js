@@ -56,7 +56,6 @@ exports.deleteTag = function(data, cb){
     });
 };
 exports.startChat = function (data, cb){
-    console.log("START CHAT >>", data);
     var users = data.users;
     if(!users.length){
         return cb({error: true, message: "users must be an array e.g [ user_1, user_2 ]"});
@@ -76,7 +75,6 @@ exports.startChat = function (data, cb){
     db.query(query, function (err, result){
         if(err) return cb({error: true, message: err});
 
-        console.log(result);
         if(result.length){
             cb({error: false, chatHead: result[0].id});
         }else{
@@ -127,16 +125,13 @@ function getLastMessage(data, cb){
 }
 
 exports.saveMessage = function (socket, data, cb){
-    console.log(data);
     if(validator.isMissing(data.chatHead)){
         return cb({error: true, message: "Missing chatHead"});
     }
     var query = "INSERT INTO `chatMessages` SET ?";
     db.query(query, data, function (err, result){
         if(err) return cb({error: true, message: err});
-        console.log(result);
         if(result.insertId > 0){
-            console.log(data.chatHead);
             socket.broadcast.to(data.chatHead).emit('newMessage', data);
             var connectedSockets = connected[data.to];
             if(!connectedSockets || !connectedSockets.length){
@@ -213,7 +208,6 @@ exports.registerEventForChat = function (data, cb){
             var query = "INSERT INTO `eventChat` SET ?";
             db.query(query, {event_id: eventId}, function (err, result){
                 if(err){
-                    console.log(err);
                     //TODO change message on production
                     return done({error: true, message: err});
                 }
@@ -258,7 +252,6 @@ exports.addUserToEvent = function (data, cb){
         user_id: data.user_id
     }, function (err, result){
         if(err){
-            console.log(err);
             if(err.code === "ER_DUP_ENTRY"){
                 return cb({error: false, message: "success"});
             }else{
@@ -275,29 +268,28 @@ exports.addUserToEvent = function (data, cb){
 };
 
 exports.sendMessageToEvent = function (socket, data, cb){
-    console.log(data);
-    if(validator.isMissing(data.eventChat)){
+    if(validator.isMissing(data.eventChat_id)){
         return cb({error: true, message: "Missing chatHead"});
     }
     var query = "INSERT INTO `eventMessages` SET ?";
     db.query(query, data, function (err, result){
         if(err) return cb({error: true, message: err});
-        console.log(result);
         if(result.insertId > 0){
-            socket.broadcast.to(data.eventChat).emit('newMessage', data);
-            getEventUsers(data.eventChat, function (err, users){
+            socket.broadcast.to(data.eventChat_id).emit('newMessage', data);
+            getEventUsers(data.eventChat_id, function (err, users){
                 async.map(users, sendPush);
             });
-            cb({error: false, data: data});
+            cb(data);
         }else{
             cb({error: true, message: "Sending failed."});
         }
     });
 
-    function sendPush(data, cb){
+    function sendPush(data){
         var connectedSockets = connected[data.user_id];
         if(!connectedSockets || !connectedSockets.length){
             findDeviceTag({user_id: data.user_id}, function (err, tags){
+                console.log("DEVICE TOKEN", err);
                 if(tags && tags.length){
                     tags.forEach(function (tag){
                         pushController.sendPush(tag, data, function (resp){
@@ -305,7 +297,6 @@ exports.sendMessageToEvent = function (socket, data, cb){
                         })
                     });
                 }
-                cb(null, null);
             })
         }
     }
@@ -313,7 +304,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
 
 function getEventUsers(chatHead, cb){
     var query = "SELECT * FROM `chat_users`";
-    query += " " + "WHERE `chatHead_id`=" + db.escape(chatHead);
+    query += " " + "WHERE `eventChat_id`=" + db.escape(chatHead);
     db.query(query, cb);
 }
 
