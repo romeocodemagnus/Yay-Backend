@@ -17,6 +17,7 @@ var user_2 = {
     tag: 'sample_tag_89fmng0Tyx-hj45x'
 };
 
+//var socketUrl = 'http://40.69.32.246:3000';
 var socketUrl = 'http://localhost:3000';
 
 var options = {

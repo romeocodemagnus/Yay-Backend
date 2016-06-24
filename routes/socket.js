@@ -442,6 +442,7 @@ module.exports = function (io){
        * @apiSuccess {String} JsonObject.message Sender message
        * @apiSuccess {String} JsonObject.image Sender image
        * @apiSuccess {String} JsonObject.from Sender id
+       * @apiSuccess {String} [JsonObjecy.file] file URL
        *
        * @apiSuccessExample Acknowledgement:
        *    {
