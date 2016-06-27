@@ -8,6 +8,7 @@ var validator = require('./helper/validator');
 var db = require('./helper/db');
 var async = require('async');
 var pushController = require('./helper/send_push');
+var chatController = require('./chatController');
 
 /**
  * @api {POST} http://40.69.32.246:3000/users/registerDeviceToken Register user device token for push
@@ -130,5 +131,15 @@ router.post('/registerDeviceToken', function (req, res){
 });
 
 router.get('/testPush', pushController.testPush);
+
+router.post('/addUserToEvent', function (req, res){
+    var data = {
+        user_id: req.body.user_id,
+        eventChat_id: req.body.eventChat_id
+    }
+    chatController.addUserToEvent(data, function (resp){
+        res.json(resp);
+    });
+});
 
 module.exports = router;
