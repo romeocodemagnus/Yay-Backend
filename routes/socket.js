@@ -342,7 +342,7 @@ module.exports = function (io){
        * @apiGroup Event
        *
        * @apiParam {String} user_id Id of user that joined the event
-       * @paiPara {String} evenChat Id of event user want to join
+       * @paiParam {String} eventChat_id Id of event user want to join
        * @apiSuccess {Boolean} error=false Value will be true/false
        * @apiSuccess {String} message Success response
        * @apiSuccessExample Acknowledgement:

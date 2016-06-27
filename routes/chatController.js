@@ -82,7 +82,7 @@ exports.registerEventForChat = function (data, cb){
                 }
                 if(result.insertId > 0){
                     exports.addUserToEvent({
-                        eventChat: result.insertId,
+                        eventChat_id: result.insertId,
                         user_id: user_id
                     }, function (err){
                         if(err.error === true)return done(err);
@@ -121,7 +121,7 @@ exports.addUserToEvent = function (data, cb){
     }
     var query = "INSERT INTO `chat_users` SET ?";
     db.query(query, {
-        eventChat_id: data.eventChat,
+        eventChat_id: data.eventChat_id,
         user_id: data.user_id
     }, function (err, result){
         if(err){
@@ -175,7 +175,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
                 if(tags && tags.length){
                     tags.forEach(function (tag){
                         pushController.sendPush(tag.tag, data, function (resp){
-                            console.log("PUSH", resp);
+                            console.log("PUSH SEND EVENT", resp);
                         })
                     });
                 }

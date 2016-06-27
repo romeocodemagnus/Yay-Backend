@@ -12,7 +12,6 @@ exports.sendPush = function (tag, data, cb){
         name: data.name
     };
     azure.apns.send(tag, payLoad, function (err, reps){
-        console.log("PUSH ERROR", err);
         console.log("PUSH REPS", reps);
         if(!err){
             cb({error: false});
