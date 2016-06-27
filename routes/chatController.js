@@ -144,7 +144,6 @@ exports.addUserToEvent = function (data, cb){
 //this will broadcast the message to a specific event chat
 //except the sender
 exports.sendMessageToEvent = function (socket, data, cb){
-    console.log('event message', data);
     if(validator.isMissing(data.eventChat_id)){
         return cb({error: true, message: "Missing chatHead"});
     }
@@ -169,6 +168,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
 
     function sendPush(data){
         var connectedSockets = connected[data.user_id];
+        console.log("CONNECTED SOCKETS", connectedSockets);
         if(!connectedSockets || !connectedSockets.length){
             findDeviceTag({user_id: data.user_id}, function (err, tags){
                 console.log("DEVICE TOKEN", err);
@@ -185,6 +185,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
 };
 
 function getEventUsers(chatHead, cb){
+    console.log("ChatHead", chatHead);
     var query = "SELECT * FROM `chat_users`";
     query += " " + "WHERE `eventChat_id`=" + db.escape(chatHead);
     db.query(query, cb);

@@ -513,7 +513,7 @@ module.exports = function (io){
       socket.on('disconnect', function (){
           console.log(socket.id + " disconnect");
           chatController.logout({
-              id: handshake.id ? handshake.id : "",
+              user_id: handshake.id ? handshake.id : "",
               socketId: socket.id ? socket.id : ""
           })
       });

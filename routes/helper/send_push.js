@@ -8,10 +8,12 @@ exports.sendPush = function (tag, data, cb){
         aps: {
             alert: data.message
         },
-        chatHead: data.chatHead || data.eventChat_id,
+        chatHead: data.eventChat_id,
         name: data.name
     };
-    azure.apns.send(tag, payLoad, function (err){
+    azure.apns.send(tag, payLoad, function (err, reps){
+        console.log("PUSH ERROR", err);
+        console.log("PUSH REPS", reps);
         if(!err){
             cb({error: false});
         }else{
