@@ -8,11 +8,9 @@ exports.sendPush = function (tag, data, cb){
         aps: {
             alert: data.message
         },
-        chatHead: data.eventChat_id,
         name: data.name
     };
     azure.apns.send(tag, payLoad, function (err, reps){
-        console.log("PUSH REPS", reps);
         if(!err){
             cb({error: false});
         }else{
@@ -22,13 +20,14 @@ exports.sendPush = function (tag, data, cb){
 };
 
 exports.testPush = function (req, res){
-    var query = "SELECT `tag` FROM `push_tag`";
+    var query = "SELECT `tag`, `user_id` FROM `push_tag`";
     var data = {
         message: "TEST PUSH",
         chatHead: 10,
         name: "Bernard"
     };
     db.query(query, function(err, tags){
+        console.log("TEST PUSH TAGS", tags);
         if(err){
             return res.json({error: true, message: err});
         }

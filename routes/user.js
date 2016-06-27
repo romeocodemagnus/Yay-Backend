@@ -136,7 +136,7 @@ router.post('/addUserToEvent', function (req, res){
     var data = {
         user_id: req.body.user_id,
         eventChat_id: req.body.eventChat_id
-    }
+    };
     chatController.addUserToEvent(data, function (resp){
         res.json(resp);
     });

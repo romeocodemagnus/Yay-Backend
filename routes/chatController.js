@@ -34,7 +34,7 @@ exports.logout = function (data){
 //will find device token (tag) via user_id
 //for push notification
 function findDeviceTag(data, cb){
-    var query = "SELECT `tag` FROM `push_tag`";
+    var query = "SELECT `tag`, `user_id` FROM `push_tag`";
     query += " " + "WHERE `user_id`=" + db.escape(data.user_id);
     if(data.tag){
         query += " " + "AND `tag`=" + db.escape(data.tag);
@@ -158,7 +158,9 @@ exports.sendMessageToEvent = function (socket, data, cb){
             //then check if they have an active socket
             //if not connected, we will send a push notification
             getEventUsers(data.eventChat_id, function (err, users){
-                async.map(users, sendPush);
+                async.map(users, sendPush,function (){
+
+                });
             });
             cb(data);
         }else{
@@ -166,20 +168,23 @@ exports.sendMessageToEvent = function (socket, data, cb){
         }
     });
 
-    function sendPush(data){
-        var connectedSockets = connected[data.user_id];
+    function sendPush(sndData, cb){
+        var connectedSockets = connected[sndData.user_id];
         console.log("CONNECTED SOCKETS", connectedSockets);
         if(!connectedSockets || !connectedSockets.length){
-            findDeviceTag({user_id: data.user_id}, function (err, tags){
-                console.log("DEVICE TOKEN", err);
-                if(tags && tags.length){
-                    tags.forEach(function (tag){
-                        pushController.sendPush(tag.tag, data, function (resp){
-                            console.log("PUSH SEND EVENT", resp);
-                        })
-                    });
-                }
+            findDeviceTag({user_id: sndData.user_id}, function (err, tags){
+                console.log("DEVICE TAGS", tags);
+                async.forEach(tags, function (tag, next){
+                    pushController.sendPush(tag.tag, data, function (resp){
+                        console.log("PUSH SEND EVENT", resp);
+                        next();
+                    })
+                }, function (){
+                    cb(null, null);
+                });
             })
+        }else{
+            cb(null, null);
         }
     }
 };
