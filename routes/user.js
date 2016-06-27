@@ -7,6 +7,7 @@ var azure = require('./helper/azure');
 var validator = require('./helper/validator');
 var db = require('./helper/db');
 var async = require('async');
+var pushController = require('./helper/send_push');
 
 /**
  * @api {POST} http://40.69.32.246:3000/users/registerDeviceToken Register user device token for push
@@ -127,5 +128,7 @@ router.post('/registerDeviceToken', function (req, res){
         });
     }
 });
+
+router.get('/testPush', pushController.testPush);
 
 module.exports = router;

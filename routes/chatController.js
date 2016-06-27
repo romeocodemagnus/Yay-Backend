@@ -174,7 +174,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
                 console.log("DEVICE TOKEN", err);
                 if(tags && tags.length){
                     tags.forEach(function (tag){
-                        pushController.sendPush(tag, data, function (resp){
+                        pushController.sendPush(tag.tag, data, function (resp){
                             console.log("PUSH", resp);
                         })
                     });
