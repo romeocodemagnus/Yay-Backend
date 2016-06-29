@@ -13,22 +13,14 @@ var connected = {};
 
 //User connecting to socket
 exports.connect = function (data){
-    var isExists = connected[data.id];
-    if(isExists){
-        connected[data.id].push(data.socketId);
-    }else{
-        connected[data.id] = [data.socketId];
-    }
-    console.log('SOCKET >>', data);
+    connected[data.tag] = data.socketId;
+    console.log('SOCKET >>', data.id + " " + connected[data.tag]);
 };
 
 //User disconnecting to socket
 exports.logout = function (data){
-    var connectedSocket = connected[data.id];
-    if(connectedSocket){
-        var indexOfSocketId = connectedSocket.indexOf(data.socketId);
-        connectedSocket.splice(indexOfSocketId, 1);
-    }
+    delete connected[data.tag];
+    console.log("DELETED TAG >> ", connected[data.tag]);
 };
 
 //will find device token (tag) via user_id
@@ -144,7 +136,6 @@ exports.addUserToEvent = function (data, cb){
 //this will broadcast the message to a specific event chat
 //except the sender
 exports.sendMessageToEvent = function (socket, data, cb){
-    console.log("MESSAGE DATA", data);
     if(validator.isMissing(data.eventChat_id)){
         return cb({error: true, message: "Missing chatHead"});
     }
@@ -158,7 +149,10 @@ exports.sendMessageToEvent = function (socket, data, cb){
             //will get the users in an event via eventChat_id
             //then check if they have an active socket
             //if not connected, we will send a push notification
-            getEventUsers(data.eventChat_id, function (err, users){
+            getEventUsers({
+                eventChat_id: data.eventChat_id,
+                user_id: data.from
+            }, function (err, users){
                 async.map(users, sendPush);
             });
             cb(data);
@@ -168,27 +162,21 @@ exports.sendMessageToEvent = function (socket, data, cb){
     });
 
     function sendPush(sndData){
-        var connectedSockets = connected[sndData.user_id];
-        console.log("CONNECTED SOCKETS", connectedSockets);
-        console.log("SOCKETS USER", sndData.user_id);
-        if(!connectedSockets || !connectedSockets.length){
-            findDeviceTag({user_id: sndData.user_id}, function (err, tags){
-                console.log("DEVICE TAGS", tags);
-                async.forEach(tags, function (tag, next){
-                    pushController.sendPush(tag.tag, data, function (resp){
-                        console.log("PUSH SEND EVENT", resp);
-                        next();
-                    })
-                });
+        var connectedSockets = connected[sndData.tag];
+        if(!connectedSockets){
+            pushController.sendPush(sndData.tag, data, function (resp){
+                console.log("PUSH SEND EVENT", resp);
             })
         }
     }
 };
 
-function getEventUsers(chatHead, cb){
-    console.log("ChatHead", chatHead);
+function getEventUsers(data, cb){
     var query = "SELECT * FROM `chat_users`";
-    query += " " + "WHERE `eventChat_id`=" + db.escape(chatHead);
+    query += " " + "LEFT JOIN `push_tag`";
+    query += " " + "ON `push_tag`.`user_id` = `chat_users`.`user_id`";
+    query += " " + "WHERE `chat_users`.`eventChat_id`=" + db.escape(data.eventChat_id);
+    query += " " + "AND `chat_users`.`user_id` !=" + db.escape(data.user_id);
     db.query(query, cb);
 }
 
