@@ -158,9 +158,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
             //then check if they have an active socket
             //if not connected, we will send a push notification
             getEventUsers(data.eventChat_id, function (err, users){
-                async.map(users, sendPush,function (){
-
-                });
+                async.map(users, sendPush);
             });
             cb(data);
         }else{
@@ -168,7 +166,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
         }
     });
 
-    function sendPush(sndData, cb){
+    function sendPush(sndData){
         var connectedSockets = connected[sndData.user_id];
         console.log("CONNECTED SOCKETS", connectedSockets);
         if(!connectedSockets || !connectedSockets.length){
@@ -179,12 +177,8 @@ exports.sendMessageToEvent = function (socket, data, cb){
                         console.log("PUSH SEND EVENT", resp);
                         next();
                     })
-                }, function (){
-                    cb(null, null);
                 });
             })
-        }else{
-            cb(null, null);
         }
     }
 };

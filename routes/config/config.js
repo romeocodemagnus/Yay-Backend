@@ -13,8 +13,8 @@ var config = {
                 pass 	: 'root'
             },
             azure: {
-                hubname : "friendzi_notification",
-                connection_string: "Endpoint=sb://friendzipush.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=BVNNYuxrlvIxEzjai0AtMPeuQeXJvXDrZlfTCxvz4Zk="
+                hubname : "friendzi_dev_push",
+                connection_string: "Endpoint=sb://friendzidev.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=6IxCONnYfif9vTGyI/LzuYimw8QZG1TMEMThUp5foi8="
             }
         },
         production: {
