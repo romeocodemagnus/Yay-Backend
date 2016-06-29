@@ -6,7 +6,7 @@ var db = require('./db');
 exports.sendPush = function (tag, data, cb){
     var payLoad = {
         aps: {
-            alert: data.name + "-" + data.message
+            alert: data.name + ": " + data.message
         }
     };
     azure.apns.send(tag, payLoad, function (err, reps){

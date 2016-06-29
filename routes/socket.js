@@ -510,10 +510,26 @@ module.exports = function (io){
           console.log(socket.id + " leaving event " + data.eventChat);
       });
 
+      socket.on('offline', function(data){
+          console.log("offline", data);
+          chatController.logout({
+              id: data.id ? data.id : "",
+              tag: data.tag ? data.tag : "",
+              socketId: socket.id ? socket.id : ""
+          })
+      });
+
+      socket.on('reconnect', function (data){
+          chatController.connect({
+              id: data.id ? data.id : "",
+              tag: data.tag ? data.tag : "",
+              socketId: socket.id ? socket.id : ""
+          });
+      });
       socket.on('disconnect', function (){
           console.log(socket.id + " disconnect");
           chatController.logout({
-              user_id: handshake.id ? handshake.id : "",
+              id: handshake.id ? handshake.id : "",
               socketId: socket.id ? socket.id : ""
           })
       });

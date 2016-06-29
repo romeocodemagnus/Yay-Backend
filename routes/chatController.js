@@ -24,7 +24,7 @@ exports.connect = function (data){
 
 //User disconnecting to socket
 exports.logout = function (data){
-    var connectedSocket = connected[data.user_id];
+    var connectedSocket = connected[data.id];
     if(connectedSocket){
         var indexOfSocketId = connectedSocket.indexOf(data.socketId);
         connectedSocket.splice(indexOfSocketId, 1);
@@ -144,6 +144,7 @@ exports.addUserToEvent = function (data, cb){
 //this will broadcast the message to a specific event chat
 //except the sender
 exports.sendMessageToEvent = function (socket, data, cb){
+    console.log("MESSAGE DATA", data);
     if(validator.isMissing(data.eventChat_id)){
         return cb({error: true, message: "Missing chatHead"});
     }
@@ -169,6 +170,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
     function sendPush(sndData){
         var connectedSockets = connected[sndData.user_id];
         console.log("CONNECTED SOCKETS", connectedSockets);
+        console.log("SOCKETS USER", sndData.user_id);
         if(!connectedSockets || !connectedSockets.length){
             findDeviceTag({user_id: sndData.user_id}, function (err, tags){
                 console.log("DEVICE TAGS", tags);
