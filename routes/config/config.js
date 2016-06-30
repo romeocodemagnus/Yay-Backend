@@ -52,5 +52,5 @@ var config = {
 // set development as default environment
 !process.env['NODE_ENV'] && (process.env['NODE_ENV'] = 'development');
 config = config[process.env['NODE_ENV']];
-
+console.log("ENV", process.env['NODE_ENV']);
 module.exports = config;
