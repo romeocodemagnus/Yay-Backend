@@ -19,8 +19,11 @@ exports.connect = function (data){
 
 //User disconnecting to socket
 exports.logout = function (data){
-    delete connected[data.tag];
-    console.log("DELETED TAG >> ", connected[data.tag]);
+    var tag = data.tag;
+    console.log(tag);
+    console.log("WILL DELETE TAG >> ", connected[tag]);
+    delete connected[tag];
+    console.log("DELETED TAG >> ", connected[tag]);
 };
 
 //will find device token (tag) via user_id
@@ -136,6 +139,7 @@ exports.addUserToEvent = function (data, cb){
 //this will broadcast the message to a specific event chat
 //except the sender
 exports.sendMessageToEvent = function (socket, data, cb){
+    console.log(data);
     if(validator.isMissing(data.eventChat_id)){
         return cb({error: true, message: "Missing chatHead"});
     }
@@ -153,6 +157,7 @@ exports.sendMessageToEvent = function (socket, data, cb){
                 eventChat_id: data.eventChat_id,
                 user_id: data.from
             }, function (err, users){
+                console.log(users);
                 async.map(users, sendPush);
             });
             cb(data);
@@ -163,6 +168,8 @@ exports.sendMessageToEvent = function (socket, data, cb){
 
     function sendPush(sndData){
         var connectedSockets = connected[sndData.tag];
+        console.log("PUSH DATA", sndData);
+        console.log("CONNECTED SOCKETS", connected);
         if(!connectedSockets){
             pushController.sendPush(sndData.tag, data, function (resp){
                 console.log("PUSH SEND EVENT", resp);
@@ -178,6 +185,7 @@ function getEventUsers(data, cb){
     query += " " + "WHERE `chat_users`.`eventChat_id`=" + db.escape(data.eventChat_id);
     query += " " + "AND `chat_users`.`user_id` !=" + db.escape(data.user_id);
     db.query(query, cb);
+    console.log(query);
 }
 
 //If eventChat_id is unobtainable

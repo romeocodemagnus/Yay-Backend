@@ -527,9 +527,10 @@ module.exports = function (io){
           });
       });
       socket.on('disconnect', function (){
-          console.log(socket.id + " disconnect");
+          console.log("disconnect", handshake);
           chatController.logout({
               id: handshake.id ? handshake.id : "",
+              tag: handshake.tag ? handshake.tag : "",
               socketId: socket.id ? socket.id : ""
           })
       });

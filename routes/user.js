@@ -30,7 +30,8 @@ var chatController = require('./chatController');
  * @apiError {String} message
  */
 
-router.post('/registerDeviceToken', function (req, res){
+router.post('/registerDeviceToken', function (req, res) {
+    console.log(req.body);
     if(validator.isMissing(req.body.device_token)){
         return res.status(404).send({error: false, message: "Missing device_token"});
     }
@@ -71,7 +72,6 @@ router.post('/registerDeviceToken', function (req, res){
 
                 db.query(query, function (err, result){
                     if (err) {
-                        console.log(err);
                         if (err.code === 'ER_DUP_ENTRY') {
                             return done(null, {error: false, message: "Success"});
                         }else {
@@ -151,6 +151,7 @@ router.get('/testPush', pushController.testPush);
  * @apiError error=true
  */
 router.post('/addUserToEvent', function (req, res){
+    console.log("addUserToEvent", req.body);
     if(validator.isMissing(req.body.user_id)){
         return res.status(404).send({error: true, message: "Missing user_id"});
     }
@@ -189,6 +190,7 @@ router.post('/addUserToEvent', function (req, res){
  * @apiError error=true
  */
 router.post('/registerEvent', function(req, res){
+    console.log(req.body);
     if(validator.isMissing(req.body.user_id)){
         return res.status(404).send({error: true, message: "Missing user_id"});
     }

@@ -4,6 +4,9 @@
 var azure = require('./azure');
 var db = require('./db');
 exports.sendPush = function (tag, data, cb){
+    if(!tag){
+        return;
+    }
     var payLoad = {
         aps: {
             alert: data.name + ": " + data.message
